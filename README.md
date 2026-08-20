@@ -17,9 +17,9 @@ The only difference is the build-time `USE_EVE` env var and (for the third) a
 
 | | deploy script | |
 |---|---|---|
-| ✅ **CONTROL** — `withEve()` bypassed | `npm run deploy:control` | TBD |
-| ❌ **BROKEN** — `withEve()` named-agent mount | `npm run deploy:broken` | TBD |
-| 💥 **WORKAROUND** — manual `services` in `vercel.json` | `npm run deploy:workaround` | TBD |
+| ✅ **CONTROL** — `withEve()` bypassed | `npm run deploy:control` | **https://eve-services-repro-control.vercel.app** |
+| ❌ **BROKEN** — `withEve()` named-agent mount | `npm run deploy:broken` | **https://eve-services-repro-broken.vercel.app** |
+| 💥 **WORKAROUND** — manual `services` in `vercel.json` | `npm run deploy:workaround` | **https://eve-services-repro-workaround.vercel.app** |
 
 ## Reproduce by clicking (the user-facing symptom)
 
@@ -30,15 +30,17 @@ Open `/en/lab` on each deployment and click any card:
   never mounts and DevTools shows the router looping the same prefetch requests. This is
   the exact failure a production app hit: a deterministic red Playwright e2e
   (`expect(getByTestId('lab-app-modal')).toBeVisible()` times out) on every eve preview.
-- **WORKAROUND**: much worse — broad navigation/routing failures across the app, not just
-  the modal. On the production app this config flipped the e2e suite from 40/41 passing to
-  **1/41 passing**.
+- **WORKAROUND**: much worse — on this repro **every route returns 404**: `/en`, `/en/lab`,
+  even the eve service's own `/eve/agents/demo/eve/v1/health`. The deployment builds and
+  reports Ready, then serves nothing. On the production app the same config flipped the
+  e2e suite from 40/41 passing to **1/41 passing** (timeouts and missing elements
+  everywhere).
 
 ## Or verify with curl — no auth, no clone
 
 ```bash
-CONTROL=TBD
-BROKEN=TBD
+CONTROL=https://eve-services-repro-control.vercel.app
+BROKEN=https://eve-services-repro-broken.vercel.app
 
 probe() { curl -sS -o /dev/null \
   -w "%{http_code} %{content_type}  x-matched-path=%header{x-matched-path}\n" \

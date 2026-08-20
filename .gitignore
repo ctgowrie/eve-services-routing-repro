@@ -4,3 +4,5 @@ node_modules/
 .output/
 .vercel/
 vercel.json
+.vercel
+.env*
