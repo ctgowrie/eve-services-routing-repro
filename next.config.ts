@@ -20,8 +20,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // Surfaced to the client so /probe can label which build you are looking at.
   env: { NEXT_PUBLIC_USE_EVE: USE_EVE ? '1' : '0' },
-  // Same router-cache experiment as the app this was found in.
+  // Same router config as the app this was found in: route prediction OFF
+  // (its locale-less rewrites made 16.3's default prediction 404-flash), and
+  // the same router-cache staleTimes.
   experimental: {
+    optimisticRouting: false,
     staleTimes: {
       dynamic: 30,
       static: 300,

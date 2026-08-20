@@ -26,15 +26,21 @@ The only difference is the build-time `USE_EVE` env var and (for the third) a
 Open `/en/lab` on each deployment and click any card:
 
 - **CONTROL**: the app opens in a modal over the catalog (route interception works).
-- **BROKEN**: the URL changes to `/en/lab/<slug>` and *nothing else happens*. The modal
-  never mounts and DevTools shows the router looping the same prefetch requests. This is
-  the exact failure a production app hit: a deterministic red Playwright e2e
-  (`expect(getByTestId('lab-app-modal')).toBeVisible()` times out) on every eve preview.
-- **WORKAROUND**: much worse — on this repro **every route returns 404**: `/en`, `/en/lab`,
-  even the eve service's own `/eve/agents/demo/eve/v1/health`. The deployment builds and
-  reports Ready, then serves nothing. On the production app the same config flipped the
-  e2e suite from 40/41 passing to **1/41 passing** (timeouts and missing elements
-  everywhere).
+- **BROKEN**: the wire-level poison is deterministic (see the curl below and `/probe`),
+  and on the production app this was found in, it freezes the click: the URL changes to
+  `/en/lab/<slug>`, the modal never mounts, and the router loops the same prefetches
+  dozens of times — a deterministically red Playwright e2e
+  (`expect(getByTestId('lab-app-modal')).toBeVisible()` times out) on every eve preview,
+  across eve 0.39.1/0.40.0 × next 16.3.0/16.3.1. **In this minimal tree the router still
+  recovers and mounts the modal** — the freeze needs at least one more production
+  ingredient not yet isolated here (candidates: the client segment cache actually
+  driving the navigation, a larger/suspended tree, the suppressed background page).
+  PRs welcome; the wire-level violation below is the platform bug either way.
+- **WORKAROUND**: unambiguous — on this repro **every route returns 404**: `/en`,
+  `/en/lab`, even the eve service's own `/eve/agents/demo/eve/v1/health`. The deployment
+  builds and reports Ready, then serves nothing. On the production app the same config
+  flipped the e2e suite from 40/41 passing to **1/41 passing** (timeouts and missing
+  elements everywhere).
 
 ## Or verify with curl — no auth, no clone
 
