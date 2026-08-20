@@ -1,0 +1,6 @@
+{
+  "name": "demo-agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Project marker for eve's named-agent discovery — without it the agent root resolves to the repo root."
+}

@@ -1,0 +1,30 @@
+{
+  "name": "eve-services-routing-repro",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "deploy:control": "vercel deploy --prod --skip-domain --build-env USE_EVE=0",
+    "deploy:broken": "vercel deploy --prod --skip-domain --build-env USE_EVE=1",
+    "deploy:workaround": "cp vercel.services.json vercel.json && vercel deploy --prod --skip-domain --build-env USE_EVE=1; rm -f vercel.json"
+  },
+  "dependencies": {
+    "ai": "^7.0.58",
+    "eve": "0.40.0",
+    "next": "16.3.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "typescript": "^5"
+  }
+}

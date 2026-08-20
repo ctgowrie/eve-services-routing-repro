@@ -1,0 +1,20 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "web": { "root": ".", "framework": "nextjs" },
+    "eve-demo": {
+      "root": "agents/demo",
+      "framework": "eve",
+      "buildCommand": "EVE_PUBLIC_ROUTE_PREFIX=/eve/agents/demo eve build"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/eve/agents/demo/eve/v1/:path*",
+      "destination": {
+        "service": "eve-demo",
+        "path": "/eve/v1/:path*"
+      }
+    }
+  ]
+}
