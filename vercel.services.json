@@ -1,19 +1,39 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "services": {
-    "web": { "root": ".", "framework": "nextjs" },
+    "web": {
+      "root": ".",
+      "framework": "nextjs"
+    },
     "eve-demo": {
       "root": "agents/demo",
       "framework": "eve",
-      "buildCommand": "EVE_PUBLIC_ROUTE_PREFIX=/eve/agents/demo eve build"
+      "buildCommand": "EVE_PUBLIC_ROUTE_PREFIX=/eve/agents/demo eve build",
+      "routes": [
+        {
+          "src": "^/eve/agents/demo/eve/v1/(.*)$",
+          "transforms": [
+            {
+              "type": "request.path",
+              "op": "set",
+              "args": "/eve/v1/$1"
+            }
+          ]
+        }
+      ]
     }
   },
   "rewrites": [
     {
-      "source": "/eve/agents/demo/eve/v1/:path*",
+      "source": "/eve/agents/demo/eve/v1/(.*)",
       "destination": {
-        "service": "eve-demo",
-        "path": "/eve/v1/:path*"
+        "service": "eve-demo"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "web"
       }
     }
   ]
