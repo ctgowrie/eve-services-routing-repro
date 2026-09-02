@@ -4,8 +4,8 @@
   "private": true,
   "description": "Project marker for eve's named-agent discovery — without it the agent root resolves to the repo root. Carries its own eve dependency since the nested-web layout removed the repo-root package.json the service build previously borrowed the eve binary from.",
   "dependencies": {
-    "ai": "^7.0.58",
-    "eve": "0.40.0",
+    "ai": "^7.0.90",
+    "eve": "0.49.0",
     "zod": "^4"
   }
 }
