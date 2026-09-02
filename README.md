@@ -1,11 +1,11 @@
-# Vercel Services (V2 routing) breaks Next.js segment prefetch — eve is the trigger, and the documented `services` workaround breaks the whole app
+# Eve + Next.js segment-prefetch repro and explicit Services workaround
 
 A minimal, deployed reproduction of [vercel/eve#768](https://github.com/vercel/eve/issues/768),
 refined from [eve-segment-prefetch-repro](https://github.com/dominiksipowicz/eve-segment-prefetch-repro)
 after the original `/_tree` 500/poison was partially fixed platform-side (correct
 trees for plain dynamic routes). **Route interception is still broken** on every eve
-deployment, and the manual `vercel.json` `services` escape hatch the eve docs describe
-makes things dramatically worse.
+deployment. This branch also commits the corrected explicit `vercel.json` Services
+topology so the workaround can be deployed directly.
 
 Versions: **eve 0.40.0, next 16.3.1** (both latest at time of writing — three failing
 version combos were confirmed on the production app this was found in; eve's Next
@@ -43,16 +43,17 @@ within weeks of the services public beta):
 [#16915](https://github.com/vercel/vercel/issues/16915),
 [#16296](https://github.com/vercel/vercel/issues/16296).
 
-## Three deployments, one commit
+## Deployment variants
 
-The only difference is the build-time `USE_EVE` env var and (for the third) a
-`vercel.json` copied from [`vercel.services.json`](./vercel.services.json).
+`vercel.json` now commits the explicit Services workaround. Deploy it normally with
+`npm run deploy:services`. Use `deploy:control` for the plain-Next control. The control and broken scripts temporarily hide `vercel.json` so those generated-config
+variants remain reproducible.
 
 | | deploy script | |
 |---|---|---|
 | ✅ **CONTROL** — `withEve()` bypassed | `npm run deploy:control` | **https://eve-services-repro-control.vercel.app** |
-| ❌ **BROKEN** — `withEve()` named-agent mount | `npm run deploy:broken` | **https://eve-services-repro-broken.vercel.app** |
-| 💥 **WORKAROUND** — manual `services` in `vercel.json` | `npm run deploy:workaround` | **https://eve-services-repro-workaround.vercel.app** |
+| ❌ **BROKEN** — lazy `withEve()` generated mount | `npm run deploy:broken` | **https://eve-services-repro-broken.vercel.app** |
+| 🛠 **EXPLICIT SERVICES** — committed, corrected `vercel.json` | `npm run deploy:services` | deploy this branch |
 
 ## Reproduce by clicking (the user-facing symptom)
 
@@ -68,11 +69,9 @@ Open `/en/lab` on each deployment and click any card:
   exhibits the full failure too**: an infinite prefetch loop (~40 req/s) starts on page
   load with no interaction, and the modal mounts with a corrupted
   `slug = "(.)sudoku"` param — see [`FINDINGS-2026-08-20.md`](./FINDINGS-2026-08-20.md).
-- **WORKAROUND**: unambiguous — on this repro **every route returns 404**: `/en`,
-  `/en/lab`, even the eve service's own `/eve/agents/demo/eve/v1/health`. The deployment
-  builds and reports Ready, then serves nothing. On the production app the same config
-  flipped the e2e suite from 40/41 passing to **1/41 passing** (timeouts and missing
-  elements everywhere).
+- **EXPLICIT SERVICES**: the corrected config exposes the `web` service with a final
+  catch-all rewrite and maps Eve's public path to `/eve/v1/*` using a service-local
+  `request.path` transform. Both the Next.js app and Eve health route should return 200.
 
 ## Or verify with curl — no auth, no clone
 
@@ -98,19 +97,15 @@ Each deployment also self-diagnoses at **`/probe`** (`/en/lab` linked from there
 checks with status, content-type and `x-matched-path` printed, including the
 interception-poison check.
 
-## Why the workaround fails
+## Correct explicit Services workaround
 
-`ensureEveVercelOutputConfig` (eve ≥ 0.39.x) backs off when `vercel.json` declares a
-`services` block, so the clobbering of Next's Build Output routes is avoided — that part
-works. But declaring the web app itself as a `services` entry changes how the platform
-routes the *entire* deployment, and the result is far more broken than eve's clobber:
+Services are internal by default, so the Next.js `web` service needs a public catch-all
+rewrite. Also, a top-level service destination's `path` changes route lookup but not the
+path observed by service code. The Eve service therefore uses a service-local
+`request.path` transform from `/eve/agents/demo/eve/v1/*` to `/eve/v1/*`.
 
-- `routePrefix` on a service entry is **schema-rejected** ("should NOT have additional
-  property `routePrefix`") even though eve's docs and `@vercel/config`'s legacy
-  `experimentalServices` type describe it.
-- The schema-valid shape (top-level rewrite with a `{ service, path }` destination —
-  exactly what this repo's [`vercel.services.json`](./vercel.services.json) uses) deploys
-  successfully and then breaks navigation app-wide.
+The committed [`vercel.json`](./vercel.json) contains both corrections. The Eve-specific
+rewrite must remain before the web catch-all.
 
 ## Mechanism (corrected 2026-08-20)
 
@@ -129,8 +124,8 @@ the route chain — has-header captures (`$segmentPath`) and the
 (double-applied rewrites, artifact paths re-matched as page URLs). Requests carrying
 `Next-Router-Segment-Prefetch` land on whatever the fallback produces — here the locale
 catch-all, which politely 200s a wrong tree. There is no opt-out flag (removed in
-eve 0.11.0), eve cannot merge later (no eve code can run after `@vercel/next`), and the
-only documented alternative (manual `services`) is what the third deployment demonstrates.
+eve 0.11.0), and Eve cannot merge later (no Eve code can run after `@vercel/next`). The
+committed explicit Services topology avoids that generated-config path.
 
 ## Layout notes (mirrors the production app)
 

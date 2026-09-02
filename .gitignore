@@ -3,6 +3,4 @@ node_modules/
 .eve/
 .output/
 .vercel/
-vercel.json
-.vercel
 .env*

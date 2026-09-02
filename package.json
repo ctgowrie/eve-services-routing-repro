@@ -9,9 +9,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "deploy:control": "vercel deploy --prod --skip-domain --build-env USE_EVE=0",
-    "deploy:broken": "vercel deploy --prod --skip-domain --build-env USE_EVE=1",
-    "deploy:workaround": "cp vercel.services.json vercel.json && vercel deploy --prod --skip-domain --build-env USE_EVE=1; rm -f vercel.json"
+    "deploy:control": "./scripts/deploy-generated.sh 0",
+    "deploy:broken": "./scripts/deploy-generated.sh 1",
+    "deploy:services": "vercel deploy --prod --skip-domain"
   },
   "dependencies": {
     "ai": "^7.0.58",

@@ -1,19 +1,11 @@
 import type { NextConfig } from 'next';
 import { withEve } from 'eve/next';
 
-// ---------------------------------------------------------------------------
-// THREE DEPLOYMENTS, ONE COMMIT.
-//   USE_EVE=0  -> withEve() bypassed                       -> everything works
-//   USE_EVE=1  -> withEve() named-agent mount (generated)  -> route interception
-//                 breaks (the modal never mounts)
-//   USE_EVE=1 + vercel.json copied from vercel.services.json
-//              -> the "declare the services yourself" workaround: withEve()
-//                 detects the services block and writes nothing, the platform
-//                 wires the service natively -> the WHOLE app breaks
+// `vercel.json` explicitly declares the web and Eve services. On Vercel,
+// withEve() detects that declaration and does not generate another Services
+// config; outside Vercel it still provides the local Eve integration.
 //
-// Driven by a build-time env var so variants deploy from the same commit:
-//   npm run deploy:control | deploy:broken | deploy:workaround
-// ---------------------------------------------------------------------------
+// Set USE_EVE=0 only when deploying the plain-Next control.
 const USE_EVE = process.env.USE_EVE !== '0';
 
 const nextConfig: NextConfig = {
