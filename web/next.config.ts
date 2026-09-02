@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
 
 // Named-agent mount, matching the app this was found in: routes live under
 // /eve/agents/demo/eve/v1/*, and the generated Vercel service is `eve-demo`.
+// Casey's nested-web experiment: the Next app now lives in web/, so the agent
+// sits one level up. vercel.json declares the services, so withEve backs off
+// writing .vercel/output/config.json either way.
 export default USE_EVE
-  ? withEve(nextConfig, { agents: { demo: './agents/demo' } })
+  ? withEve(nextConfig, { agents: { demo: '../agents/demo' } })
   : nextConfig;
